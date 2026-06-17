@@ -46,9 +46,9 @@ def get_requires() -> List[str]:
 BASE_REQUIRE = [
     "torchdata>=0.8.0,<1.0",
     "blobfile>=3.0.0",
-    "torch==2.8.0",
-    "torchvision==0.23.0",
-    "torchaudio==2.8.0",
+    "torch>=2.10.0,<2.11.0",
+    "torchvision>=0.25.0,<0.26.0",
+    "torchaudio>=2.10.0,<2.11.0",
 ]
 
 def main():
