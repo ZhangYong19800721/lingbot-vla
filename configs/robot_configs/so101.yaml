@@ -1,0 +1,25 @@
+  # Single-arm config for SO-101 follower
+  states:
+    - observation.state.arm.position:
+        origin_keys:
+          - observation.state: {start: 0, end: 5}    # 5 个手臂关节
+
+    - observation.state.effector.position:
+        origin_keys:
+          - observation.state: {start: 5, end: 6}    # 夹爪
+
+  actions:
+    - action.arm.position:
+        origin_keys:
+          - action: {start: 0, end: 5}
+        subtract_state: False
+    - action.effector.position:
+        origin_keys:
+          - action: {start: 5, end: 6}
+        subtract_state: False
+
+  images:
+    - observation.images.camera_side:
+        origin_keys: observation.images.side
+    - observation.images.camera_wrist:
+        origin_keys: observation.images.wrist
