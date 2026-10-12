@@ -110,7 +110,7 @@ class VLADataset(Dataset):
         config=PI0Config,
         tokenizer=AutoTokenizer,
         image_processor=None,
-        video_backend = 'torchcodec',
+        video_backend = 'pyav',
         chunk_size = 50,
         image_size = (224, 224),
         do_nomalize = True,
@@ -146,7 +146,8 @@ class VLADataset(Dataset):
             repo_id=repo_id,
             image_transforms=Resize(image_size),
             delta_timestamps=self.get_delta_timestamps(),
-            load_image=load_image
+            load_image=load_image,
+            video_backend=video_backend,
         )
         
         self.task_mapping = dict(zip(self.dataset_meta.tasks['task_index'], self.dataset_meta.tasks.index))
