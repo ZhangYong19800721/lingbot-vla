@@ -216,3 +216,5 @@ run.sh
 start_multi_eval.sh
 trash/
 eval.sh
+
+output/*

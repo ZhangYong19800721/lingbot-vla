@@ -4,21 +4,20 @@ model:
 
 data:
   datasets_type: vla
-  data_name: robot_config_filename
-  train_path: path_to_dataset
+  data_name: so101
+  train_path: /home/zy/.cache/huggingface/lerobot/ZhangYong/lerobot_dataset_a_20260921_164625
   joints:
     - arm.position: 14
     - effector.position: 2
   cameras:
-    - camera_top
-    - camera_wrist_left
-    - camera_wrist_right
+    - camera_side
+    - camera_wrist
   num_workers: 8
   norm_type: meanstd
-  norm_stats_file: norm_path
+  norm_stats_file: assets/norm_stats/so101.json
 
 train:
-  output_dir: "output/"
+  output_dir: "output/so101"
   data_parallel_mode: fsdp2
   enable_full_shard: false
   module_fsdp_enable: true
@@ -26,7 +25,8 @@ train:
   rmpad: false
   rmpad_with_pos_ids: false
   ulysses_parallel_size: 1
-  freeze_vision_encoder: false
+  freeze_vision_encoder: true # 冻结视觉编码器
+  train_expert_only: true # 冻结 VLM（视觉和语言主干），只训练动作专家
   tokenizer_max_length: 72
   max_action_dim: 75
   max_state_dim: 75
