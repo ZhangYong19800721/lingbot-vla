@@ -173,7 +173,12 @@ def main(policy, robo_name, data_root, traj_ids, chunk_size, save_plot_path):
     delta_timestamps = {}
     for action_feature in policy.vla.feature_transform.org_features['actions']:
         delta_timestamps[action_feature] = [t / dataset_meta.fps for t in range(policy.config.chunk_size)]
-    dataset = LeRobotDataset(repo_id, root=root, delta_timestamps=delta_timestamps)
+    dataset = LeRobotDataset(
+        repo_id,
+        root=root,
+        delta_timestamps=delta_timestamps,
+        video_backend="pyav",
+    )
     print(f"Dataset length: {len(dataset)}")
     logging.info(f"Running evaluation on trajectories: {traj_ids}")
 

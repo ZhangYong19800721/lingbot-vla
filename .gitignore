@@ -218,3 +218,4 @@ trash/
 eval.sh
 
 output/*
+open_loop_results/*
