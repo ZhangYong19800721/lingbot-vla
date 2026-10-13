@@ -21,4 +21,16 @@ python scripts/open_loop_eval.py \
     --num_denoising_step 10 \
     --save_plot_path ./open_loop_results/
 
-# 推理命令
+# 真机部署
+## 服务端部署
+
+export TOKENIZERS_PARALLELISM=false
+export QWEN25_PATH=/home/zy/Downloads/models/Qwen2.5-VL-3B-Instruct
+python -m deploy.lingbot_vla_policy \
+ --model_path /home/zy/workspace/lingbot-vla/output/so101/checkpoints/global_step_15000/hf_ckpt \
+ --use_compile \
+ --use_length 25 \
+ --num_denoising_step 10 \
+ --port 8006
+
+ ## 客户端部署
