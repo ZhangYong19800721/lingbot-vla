@@ -1,9 +1,11 @@
 import logging
 import time
 from typing import Dict, Optional, Tuple
+from urllib.parse import urlsplit, urlunsplit
 
-from typing_extensions import override
 import websockets.sync.client
+from typing_extensions import override
+
 from .msgpack_numpy import Packer, unpackb
 
 
@@ -13,12 +15,17 @@ class WebsocketClientPolicy:
     See WebsocketPolicyServer for a corresponding server implementation.
     """
 
-    def __init__(self, host: str = "0.0.0.0", port: Optional[int] = None, api_key: Optional[str] = None) -> None:
-        self._uri = f"ws://{host}"
-        if port is not None:
-            self._uri += f":{port}"
+    def __init__(
+        self,
+        host: str = "127.0.0.1",
+        port: Optional[int] = 8006,
+        api_key: Optional[str] = None,
+        ping_timeout: Optional[float] = 120,
+    ) -> None:
+        self._uri = _build_websocket_uri(host, port)
         self._packer = Packer()
         self._api_key = api_key
+        self._ping_timeout = ping_timeout
         self._ws, self._server_metadata = self._wait_for_server()
 
     def get_server_metadata(self) -> Dict:
@@ -30,7 +37,11 @@ class WebsocketClientPolicy:
             try:
                 headers = {"Authorization": f"Api-Key {self._api_key}"} if self._api_key else None
                 conn = websockets.sync.client.connect(
-                    self._uri, compression=None, max_size=None, additional_headers=headers
+                    self._uri,
+                    compression=None,
+                    max_size=None,
+                    additional_headers=headers,
+                    ping_timeout=self._ping_timeout,
                 )
                 metadata = unpackb(conn.recv())
                 return conn, metadata
@@ -52,37 +63,21 @@ class WebsocketClientPolicy:
     def reset(self, robo_name: str) -> None:
         self.infer(dict(reset=True, robo_name=robo_name))
 
-if __name__ == "__main__":
-    policy_on_device = WebsocketClientPolicy(port=8000)
-    import torch
-    import numpy as np
-    from PIL import Image
-    from .image_tools import convert_to_uint8
-    device = torch.device("cuda")
+    def close(self) -> None:
+        self._ws.close()
 
-    base_0_rgb = np.random.randint(0, 256, size=(1, 3, 224, 224), dtype=np.uint8)
-    left_wrist_0_rgb = np.random.randint(0, 256, size=(1, 3, 224, 224), dtype=np.uint8)
-    state = np.random.rand(1,8).astype(np.float32)
-    prompt = ["do something"]
 
-    # observation = {
-    #     "image": {
-    #         "base_0_rgb": torch.from_numpy(base_0_rgb).to(device)[None],
-    #         "left_wrist_0_rgb": torch.from_numpy(left_wrist_0_rgb).to(device)[None],
-    #     },
-    #     "state": torch.from_numpy(state).to(device)[None],
-    #     "prompt": prompt,
-    # }
+def _build_websocket_uri(host: str, port: Optional[int]) -> str:
+    """Build a WebSocket URI from a hostname or a ws(s) URL."""
+    if "://" not in host:
+        return f"ws://{host}" + (f":{port}" if port is not None else "")
 
-    observation = {
-        "image": {
-            "base_0_rgb": convert_to_uint8(base_0_rgb),
-            "left_wrist_0_rgb": convert_to_uint8(left_wrist_0_rgb),
-            "right_wrist_0_rgb": convert_to_uint8(left_wrist_0_rgb),
-        },
-        "state": state,
-        "prompt": prompt,
-    }
-
-    policy_on_device.infer(observation)
-    from IPython import embed;embed()
+    parsed = urlsplit(host)
+    if parsed.scheme not in {"ws", "wss"} or not parsed.netloc:
+        raise ValueError("WebSocket host URL must start with ws:// or wss:// and include a hostname")
+    # A complete URL may include its own port and path. Otherwise, use the
+    # separate port argument while preserving the path (for example /infer).
+    netloc = parsed.netloc
+    if parsed.port is None and port is not None:
+        netloc = f"{netloc}:{port}"
+    return urlunsplit((parsed.scheme, netloc, parsed.path, parsed.query, parsed.fragment))

@@ -33,4 +33,35 @@ python -m deploy.lingbot_vla_policy \
  --num_denoising_step 10 \
  --port 8006
 
- ## 客户端部署
+## 客户端部署
+
+这条命令只请求推理并打印预测动作，不会发送动作给机械臂，但会连接机械臂读取传感器和相机。如果服务端不在客户端这台机器上，把 --host 换成服务端的局域网 IP。若要使用文档中的远程 TLS 服务，则填写 --host "wss://服务器域名" 和对应的 --port；客户端已支持这种连接方式。
+
+conda activate lingbotvla
+cd /home/zy/workspace/lingbot-vla
+
+python -m deploy.so101_websocket_client \
+  --host 127.0.0.1 \
+  --port 8006 \
+  --robot-port /dev/ttyACM0 \
+  --robot-id zihao_follower_arm \
+  --side-camera /dev/video2 \
+  --side-camera-width 1920 \
+  --side-camera-height 1080 \
+  --side-camera-fps 30 \
+  --side-camera-fourcc MJPG \
+  --wrist-camera /dev/video0 \
+  --wrist-camera-width 1280 \
+  --wrist-camera-height 720 \
+  --wrist-camera-fps 30 \
+  --wrist-camera-fourcc MJPG \
+  --task "pick up a tape and put it into a drawer"
+
+确认预测正常后，只执行动作块的第一步：
+
+# 在上面命令末尾追加：
+python -m deploy.so101_websocket_client --host 127.0.0.1 --port 8006 --robot-port /dev/ttyACM0 --robot-id zihao_follower_arm --side-camera /dev/video2 --side-camera-width 1920 --side-camera-height 1080 --side-camera-fps 30 --side-camera-fourcc MJPG  --wrist-camera /dev/video0 --wrist-camera-width 1280 --wrist-camera-height 720 --wrist-camera-fps 30 --wrist-camera-fourcc MJPG --task "pick up a tape and put it into a drawer" --execute --steps-per-chunk 1 --max-chunks 1
+
+确认机械臂运动方向和幅度合适后，可用 --execute --steps-per-chunk 25 --max-chunks 0 持续运行，按 Ctrl+C 停止。单步执行仍会让机械臂移动，请先清空运动范围并保持随时停止的条件。
+
+python -m deploy.so101_websocket_client --host 127.0.0.1 --port 8006 --robot-port /dev/ttyACM0 --robot-id zihao_follower_arm --side-camera /dev/video2 --side-camera-width 1920 --side-camera-height 1080 --side-camera-fps 30 --side-camera-fourcc MJPG  --wrist-camera /dev/video0 --wrist-camera-width 1280 --wrist-camera-height 720 --wrist-camera-fps 30 --wrist-camera-fourcc MJPG --task "pick up a tape and put it into a drawer" --execute --steps-per-chunk 25 --max-chunks 0
